@@ -1,0 +1,107 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Queue;
+import java.util.StringTokenizer;
+import java.util.concurrent.PriorityBlockingQueue;
+
+public class Main {
+	static class Star implements Comparable<Star> {
+		int idx;
+		int point;
+
+		public Star(int idx, int point) {
+			this.idx = idx;
+			this.point = point;
+		}
+
+		@Override
+		public int compareTo(Star o) {
+			return point - o.point;
+		}
+	}
+
+	static class Edge implements Comparable<Edge> {
+		int star1;
+		int star2;
+		int dis;
+
+		public Edge(int star1, int star2, int dis) {
+			this.star1 = star1;
+			this.star2 = star2;
+			this.dis = dis;
+		}
+
+		@Override
+		public int compareTo(Edge o) {
+			return dis - o.dis;
+		}
+	}
+
+	public static void main(String[] args) throws IOException {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+		int n = Integer.parseInt(br.readLine());
+		Queue<Star>[] points = new PriorityBlockingQueue[3];
+		for (int i = 0; i < 3; i++)
+			points[i] = new PriorityBlockingQueue<Star>();
+
+		for (int i = 1; i <= n; i++) {
+			StringTokenizer st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < 3; j++)
+				points[j].add(new Star(i, Integer.parseInt(st.nextToken())));
+		}
+
+		Queue<Edge> disInfo = new PriorityBlockingQueue<>();
+
+		for (int i = 0; i < 3; i++) {
+			Star before, after = points[i].poll();
+			for (int j = 1; j < n; j++) {
+				before = after;
+				after = points[i].poll();
+				int dis = Math.abs(before.point - after.point);
+
+				disInfo.add(new Edge(before.idx, after.idx, dis));
+			}
+		}
+
+		System.out.println(kruskal(disInfo, n + 1));
+	}
+
+	private static int kruskal(Queue<Edge> disInfo, int n) {
+		int cost = 0;
+		int[] parent = new int[n];
+		for (int i = 1; i < n; i++)
+			parent[i] = i;
+		int cnt = n - 2;
+		while (cnt > 0) {
+			Edge now = disInfo.poll();
+			if (union(parent, now.star1, now.star2))
+				continue;
+			cost += now.dis;
+			cnt--;
+		}
+
+		return cost;
+	}
+
+	public static boolean union(int[] parent, int x, int y) {
+		x = find(parent, x);
+		y = find(parent, y);
+
+		if (x == y)
+			return true;
+
+		if (x < y)
+			parent[y] = x;
+		else
+			parent[x] = y;
+		return false;
+	}
+
+	public static int find(int[] parent, int x) {
+		if (parent[x] == x)
+			return x;
+		return parent[x] = find(parent, parent[x]);
+	}
+}
